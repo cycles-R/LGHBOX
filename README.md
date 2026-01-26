@@ -11,6 +11,10 @@ Uso exclusivo con fines legales y de aprendizaje.
 - Seguridad básica (contraseñas, hashes, headers)
 - Simulaciones educativas
 
+sudo apt-get update
+sudo apt-get install git
+sudo apt-get install python3 python3-pip
+
 ## Instalación
 ```bash
 git clone https://github.com/cycles-R/LGHBOX

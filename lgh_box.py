@@ -75,6 +75,7 @@ def IP_Track():
     print(f"{Wh} Offset          :{Gr}", ip_data["timezone"]["offset"])
     print(f"{Wh} UTC             :{Gr}", ip_data["timezone"]["utc"])
     print(f"{Wh} Current Time    :{Gr}", ip_data["timezone"]["current_time"])
+    
     except:
         print(f"{Re}Error al obtener datos de la IP")
 

@@ -82,11 +82,12 @@ pkg install python
 ---
 
 ## ▶️ Usage Tool
-
+```
 git clone https://github.com/cycles-R/LGHBOX
 cd LGHBOX
 pip3 install -r requirements.txt
 python3 lgh_box.py
+```
 
 ---
 

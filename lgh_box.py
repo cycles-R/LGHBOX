@@ -1,222 +1,181 @@
 #!/usr/bin/env python3
-# LGH BOX - Ethical OSINT Toolkit
+# =========================================
+# LGHBOX · Ethical OSINT Toolkit
+# de parte del equipo de LA GRAN HERMANDAD
+# =========================================
 
-import os
-import sys
-import time
 import json
-import hashlib
 import requests
-from colorama import Fore, Style, init
+import time
+import os
+import phonenumbers
+from phonenumbers import carrier, geocoder, timezone
+from sys import stderr
 
-init(autoreset=True)
+# ===== COLORES =====
+Bl = '\033[30m'
+Re = '\033[1;31m'
+Gr = '\033[1;32m'
+Ye = '\033[1;33m'
+Blu = '\033[1;34m'
+Mage = '\033[1;35m'
+Cy = '\033[1;36m'
+Wh = '\033[1;37m'
+End = '\033[0m'
 
-# =========================
-# UTILIDADES
-# =========================
+# ===== UTILIDADES =====
 def clear():
-    os.system("cls" if os.name == "nt" else "clear")
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def pause():
-    input(Fore.YELLOW + "\nPresiona ENTER para continuar...")
+    input(f"\n{Wh}[ {Gr}+ {Wh}] Presiona Enter para continuar")
 
-def red(text):
-    return Fore.RED + text + Style.RESET_ALL
+def is_option(func):
+    def wrapper(*args, **kwargs):
+        run_banner()
+        func(*args, **kwargs)
+    return wrapper
 
-def green(text):
-    return Fore.GREEN + text + Style.RESET_ALL
+# ===== FUNCIONES =====
+@is_option
+def IP_Track():
+    ip = input(f"{Wh}\nIP objetivo: {Gr}")
+    print(f'\n {Wh}============= {Gr}INFORMACIÓN DE LA IP {Wh}=============')
 
-def cyan(text):
-    return Fore.CYAN + text + Style.RESET_ALL
+    try:
+        req = requests.get(f"http://ipwho.is/{ip}", timeout=10)
+        data = json.loads(req.text)
 
-def yellow(text):
-    return Fore.YELLOW + text + Style.RESET_ALL
-
-# =========================
-# BANNER
-# =========================
-def banner():
-    clear()
-    print(red(r"""
-██╗     ██████╗ ██╗  ██╗    ██████╗  ██████╗ ██╗  ██╗
-██║     ██╔════╝ ██║  ██║    ██╔══██╗██╔═══██╗╚██╗██╔╝
-██║     ██║  ███╗███████║    ██████╔╝██║   ██║ ╚███╔╝ 
-██║     ██║   ██║██╔══██║    ██╔══██╗██║   ██║ ██╔██╗ 
-███████╗╚██████╔╝██║  ██║    ██████╔╝╚██████╔╝██╔╝ ██╗
-╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═════╝  ╚═════╝ ╚═╝  ╚═╝
-    """))
-    print(yellow("Ethical OSINT Toolkit | Read-only | No intrusion\n"))
-
-# =========================
-# HASH TOOLS
-# =========================
-def hash_tools():
-    clear()
-    print(cyan("== HASH TOOLS =="))
-    text = input("Texto a hashear: ").encode("utf-8")
-
-    hashes = {
-        "MD5": hashlib.md5(text).hexdigest(),
-        "SHA1": hashlib.sha1(text).hexdigest(),
-        "SHA256": hashlib.sha256(text).hexdigest(),
-        "SHA512": hashlib.sha512(text).hexdigest(),
-    }
-
-    print()
-    for k, v in hashes.items():
-        print(green(f"{k}: ") + v)
+        print(f"{Wh}IP                :{Gr} {ip}")
+        print(f"{Wh}Tipo              :{Gr} {data['type']}")
+        print(f"{Wh}País              :{Gr} {data['country']}")
+        print(f"{Wh}Código país       :{Gr} {data['country_code']}")
+        print(f"{Wh}Ciudad            :{Gr} {data['city']}")
+        print(f"{Wh}Región            :{Gr} {data['region']}")
+        print(f"{Wh}Latitud           :{Gr} {data['latitude']}")
+        print(f"{Wh}Longitud          :{Gr} {data['longitude']}")
+        print(f"{Wh}Mapa              :{Gr} https://www.google.com/maps/@{data['latitude']},{data['longitude']},8z")
+        print(f"{Wh}ISP               :{Gr} {data['connection']['isp']}")
+        print(f"{Wh}ORG               :{Gr} {data['connection']['org']}")
+        print(f"{Wh}ASN               :{Gr} {data['connection']['asn']}")
+        print(f"{Wh}Zona horaria      :{Gr} {data['timezone']['id']}")
+        print(f"{Wh}Hora actual       :{Gr} {data['timezone']['current_time']}")
+    except:
+        print(f"{Re}Error al obtener datos de la IP")
 
     pause()
 
-# =========================
-# IP INTELLIGENCE (MULTI-FUENTE)
-# =========================
-def ip_intel():
-    clear()
-    print(cyan("== IP INTELLIGENCE =="))
-    ip = input("IP (deja vacío para tu IP): ").strip()
+@is_option
+def phoneGW():
+    phone = input(f"\n{Wh}Número objetivo (Ej +598XXXXXXXX): {Gr}")
 
-    results = {}
-
-    # Fuente 1: ipwho.is
     try:
-        r = requests.get(f"https://ipwho.is/{ip}", timeout=10).json()
-        if r.get("success", True):
-            results["ipwho.is"] = {
-                "ip": r.get("ip"),
-                "country": r.get("country"),
-                "region": r.get("region"),
-                "city": r.get("city"),
-                "lat": r.get("latitude"),
-                "lon": r.get("longitude"),
-                "isp": r.get("isp"),
-                "asn": r.get("asn"),
-                "proxy": r.get("proxy"),
-            }
-    except Exception:
-        pass
+        parsed = phonenumbers.parse(phone)
+        region = phonenumbers.region_code_for_number(parsed)
+        operador = carrier.name_for_number(parsed, "es")
+        location = geocoder.description_for_number(parsed, "es")
+        valid = phonenumbers.is_valid_number(parsed)
+        possible = phonenumbers.is_possible_number(parsed)
+        tz = ", ".join(timezone.time_zones_for_number(parsed))
 
-    # Fuente 2: ipapi.co
-    try:
-        r = requests.get(f"https://ipapi.co/{ip}/json/", timeout=10).json()
-        results["ipapi.co"] = {
-            "ip": r.get("ip"),
-            "country": r.get("country_name"),
-            "region": r.get("region"),
-            "city": r.get("city"),
-            "lat": r.get("latitude"),
-            "lon": r.get("longitude"),
-            "org": r.get("org"),
-        }
-    except Exception:
-        pass
-
-    # Fuente 3: ipinfo.io
-    try:
-        r = requests.get(f"https://ipinfo.io/{ip}/json", timeout=10).json()
-        loc = r.get("loc", "")
-        lat, lon = (loc.split(",") + ["", ""])[:2]
-        results["ipinfo.io"] = {
-            "ip": r.get("ip"),
-            "country": r.get("country"),
-            "region": r.get("region"),
-            "city": r.get("city"),
-            "lat": lat,
-            "lon": lon,
-            "org": r.get("org"),
-        }
-    except Exception:
-        pass
-
-    if not results:
-        print(red("No se pudo obtener información."))
-        pause()
-        return
-
-    print()
-    for src, data in results.items():
-        print(yellow(f"[{src}]"))
-        for k, v in data.items():
-            print(f"  {k}: {v}")
-        print()
+        print(f"\n {Wh}========== {Gr}INFORMACIÓN DEL NÚMERO {Wh}==========")
+        print(f"{Wh}Ubicación         :{Gr} {location}")
+        print(f"{Wh}Región            :{Gr} {region}")
+        print(f"{Wh}Operador          :{Gr} {operador}")
+        print(f"{Wh}Zona horaria      :{Gr} {tz}")
+        print(f"{Wh}Válido            :{Gr} {valid}")
+        print(f"{Wh}Posible           :{Gr} {possible}")
+        print(f"{Wh}Formato internacional:{Gr} {phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.INTERNATIONAL)}")
+    except:
+        print(f"{Re}Número inválido")
 
     pause()
 
-# =========================
-# OSINT DE USUARIOS (PASIVO)
-# =========================
-PLATFORMS = {
-    "Facebook": "https://www.facebook.com/{}",
-    "Instagram": "https://www.instagram.com/{}/",
-    "X/Twitter": "https://x.com/{}",
-    "TikTok": "https://www.tiktok.com/@{}",
-    "GitHub": "https://github.com/{}",
-}
+@is_option
+def TrackLu():
+    username = input(f"\n{Wh}Username a buscar: {Gr}")
 
-def osint_users():
-    clear()
-    print(cyan("== OSINT USUARIOS (PASIVO) =="))
-    username = input("Username a analizar: ").strip()
-    if not username:
-        return
+    redes = [
+        ("Facebook", "https://www.facebook.com/{}"),
+        ("Twitter/X", "https://twitter.com/{}"),
+        ("Instagram", "https://www.instagram.com/{}"),
+        ("GitHub", "https://github.com/{}"),
+        ("TikTok", "https://www.tiktok.com/@{}"),
+        ("LinkedIn", "https://www.linkedin.com/in/{}"),
+        ("YouTube", "https://www.youtube.com/{}"),
+        ("Pinterest", "https://www.pinterest.com/{}"),
+        ("Telegram", "https://t.me/{}")
+    ]
 
-    print()
-    for name, url in PLATFORMS.items():
+    print(f"\n {Wh}========== {Gr}RESULTADOS OSINT DE USERNAME {Wh}==========\n")
+    for nombre, url in redes:
         link = url.format(username)
         try:
-            r = requests.head(link, allow_redirects=True, timeout=10)
-            status = "EXISTE" if r.status_code in (200, 301, 302) else "NO ENCONTRADO"
-        except Exception:
-            status = "ERROR"
+            r = requests.get(link, timeout=10)
+            if r.status_code == 200:
+                print(f"{Wh}[ {Gr}+ {Wh}] {nombre}: {Gr}{link}")
+            else:
+                print(f"{Wh}[ {Ye}! {Wh}] {nombre}: {Ye}No encontrado")
+        except:
+            print(f"{Wh}[ {Re}! {Wh}] {nombre}: Error")
 
-        color = green if status == "EXISTE" else yellow
-        print(color(f"{name}: {status}") + f" -> {link}")
-
-    print(yellow("\nNota: verificación pasiva basada en respuesta HTTP."))
     pause()
 
-# =========================
-# MI IP
-# =========================
-def my_ip():
-    clear()
-    print(cyan("== MI IP =="))
+@is_option
+def showIP():
     try:
-        r = requests.get("https://api.ipify.org?format=json", timeout=10).json()
-        print(green("Tu IP pública: ") + r.get("ip"))
-    except Exception:
-        print(red("No se pudo obtener tu IP."))
+        ip = requests.get("https://api.ipify.org").text
+        print(f"\n {Wh}========== {Gr}TU IP PÚBLICA {Wh}==========")
+        print(f"{Wh}IP:{Gr} {ip}")
+    except:
+        print(f"{Re}No se pudo obtener tu IP")
+
     pause()
 
-# =========================
-# MENÚ
-# =========================
+# ===== MENÚ =====
+options = {
+    1: ("IP Tracker", IP_Track),
+    2: ("Mostrar mi IP", showIP),
+    3: ("Información de número telefónico", phoneGW),
+    4: ("OSINT de Username", TrackLu),
+    0: ("Salir", exit)
+}
+
 def menu():
+    clear()
+    run_banner()
+    print()
+    for k, v in options.items():
+        print(f"{Wh}[ {k} ] {Gr}{v[0]}")
+
+def run_banner():
+    stderr.writelines(f"""{Re}
+██╗     ██████╗ ██╗  ██╗██████╗  ██████╗ ██╗  ██╗
+██║    ██╔════╝ ██║  ██║██╔══██╗██╔═══██╗╚██╗██╔╝
+██║    ██║  ███╗███████║██████╔╝██║   ██║ ╚███╔╝ 
+██║    ██║   ██║██╔══██║██╔══██╗██║   ██║ ██╔██╗ 
+███████╗╚██████╔╝██║  ██║██████╔╝╚██████╔╝██╔╝ ██╗
+╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝
+{Wh}LGHBOX · Ethical OSINT Toolkit
+{Re}de parte del equipo de LA GRAN HERMANDAD
+{End}
+""")
+
+def main():
     while True:
-        banner()
-        print(cyan("1) Hash Tools"))
-        print(cyan("2) IP Intelligence"))
-        print(cyan("3) OSINT Usuarios (Facebook / Instagram / X / TikTok / GitHub)"))
-        print(cyan("4) Ver mi IP"))
-        print(cyan("0) Salir"))
-
-        opt = input("\nSelecciona una opción: ").strip()
-
-        if opt == "1":
-            hash_tools()
-        elif opt == "2":
-            ip_intel()
-        elif opt == "3":
-            osint_users()
-        elif opt == "4":
-            my_ip()
-        elif opt == "0":
-            print(yellow("Saliendo..."))
-            time.sleep(0.5)
-            sys.exit(0)
-        else:
-            print(red("Opción inválida."))
-            time.sleep(0.8)
+        menu()
+        try:
+            opt = int(input(f"\n{Wh}Selecciona una opción: {Gr}"))
+            if opt in options:
+                options[opt][1]()
+            else:
+                print(f"{Ye}Opción inválida")
+                time.sleep(1)
+        except KeyboardInterrupt:
+            break
+        except:
+            print(f"{Re}Error")
+            time.sleep(1)
 
 if __name__ == "__main__":
-    menu()
+    main()

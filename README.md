@@ -13,6 +13,6 @@ Uso exclusivo con fines legales y de aprendizaje.
 
 ## Instalación
 ```bash
-git clone https://github.com/TU_USUARIO/LGH-BOX.git
+git clone https://github.com/cycles-R/LGHBOX
 cd LGH-BOX
 pip install -r requirements.txt

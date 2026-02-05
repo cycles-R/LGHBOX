@@ -16,13 +16,6 @@ Está diseñada para **análisis pasivo** de información pública con fines edu
 
 ## 📌 Herramientas incluidas (permitidas)
 
-### 🔐 Hash Tools
-Generación y análisis de hashes (no cracking):
-- MD5
-- SHA1
-- SHA256
-- SHA512  
-Uso típico: aprendizaje, pruebas, análisis forense básico.
 
 ### 🌐 IP Intelligence (multi-fuente)
 Consulta pasiva de IP usando **APIs públicas**:
